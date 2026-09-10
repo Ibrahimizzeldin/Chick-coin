@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chick Coin App</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- TON Connect SDK for Real Wallet Integration -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -23,25 +26,17 @@
             justify-content: space-between;
         }
 
-        /* Top Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 12px 16px;
             background: #161b22;
             border-bottom: 1px solid #30363d;
         }
 
-        .btn-wallet {
-            background: #1f6feb;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
+        #ton-connect-btn {
+            scale: 0.85;
         }
 
         .user-info {
@@ -61,20 +56,12 @@
             font-weight: bold;
         }
 
-        .user-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
+        .user-name { font-size: 13px; font-weight: 600; }
+        .user-handle { font-size: 11px; color: #8b949e; }
 
-        .user-handle {
-            font-size: 11px;
-            color: #8b949e;
-        }
-
-        /* Main Content Container */
         .container {
             flex: 1;
-            padding: 20px;
+            padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -94,13 +81,12 @@
             align-items: center;
         }
 
-        /* Dashboard Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
@@ -110,22 +96,12 @@
             border: 1px solid #30363d;
         }
 
-        .stat-title {
-            font-size: 12px;
-            color: #8b949e;
-            margin-bottom: 4px;
-        }
+        .stat-title { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+        .stat-value { font-size: 16px; font-weight: bold; color: #58a6ff; }
 
-        .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #58a6ff;
-        }
-
-        /* Mine Tab Specifics */
         .chick-icon {
-            font-size: 80px;
-            margin: 15px 0;
+            font-size: 75px;
+            margin: 10px 0;
             animation: pulse 2s infinite;
         }
 
@@ -136,7 +112,7 @@
         }
 
         .coin-counter {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             margin-bottom: 5px;
             font-family: monospace;
@@ -144,24 +120,23 @@
         }
 
         .timer {
-            font-size: 14px;
+            font-size: 13px;
             color: #8b949e;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-family: monospace;
         }
 
         .btn-mine {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background: #238636;
             color: white;
             border: none;
-            border-radius: 14px;
-            font-size: 18px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
-            transition: 0.2s;
         }
 
         .btn-mine.mining {
@@ -171,7 +146,6 @@
             box-shadow: none;
         }
 
-        /* Tasks & Lists */
         .task-list {
             width: 100%;
             display: flex;
@@ -183,32 +157,34 @@
         .task-item {
             background: #161b22;
             border: 1px solid #30363d;
-            padding: 12px 15px;
+            padding: 12px;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 13px;
         }
 
         .task-btn {
             background: #1f6feb;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
             font-size: 12px;
+            font-weight: bold;
             cursor: pointer;
         }
 
         .task-btn.done {
             background: #238636;
+            cursor: default;
         }
 
-        /* Copy Link Box */
         .ref-box {
             background: #161b22;
             border: 1px dashed #30363d;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             width: 100%;
             margin-top: 15px;
@@ -217,7 +193,6 @@
             color: #58a6ff;
         }
 
-        /* Bottom Navigation Bar */
         .nav-bar {
             display: flex;
             justify-content: space-around;
@@ -237,20 +212,15 @@
             flex: 1;
         }
 
-        .nav-item.active {
-            color: #58a6ff;
-        }
-
-        .nav-icon {
-            font-size: 20px;
-        }
+        .nav-item.active { color: #58a6ff; }
+        .nav-icon { font-size: 18px; }
     </style>
 </head>
 <body>
 
     <!-- Top Header -->
     <div class="header">
-        <button class="btn-wallet" onclick="connectWallet()">Connect Wallet</button>
+        <div id="ton-connect-btn"></div>
         <div class="user-info">
             <div style="text-align: left;">
                 <div class="user-name" id="tgName">أبو تميم</div>
@@ -280,14 +250,13 @@
             <div class="coin-counter" id="miningCounter">0.00000000</div>
             <div class="timer" id="timerDisplay">08:00:00</div>
 
-            <button class="btn-mine" id="mineBtn" onclick="startMining()">Start Mining</button>
+            <button class="btn-mine" id="mineBtn" onclick="toggleMining()">Start Mining</button>
         </div>
 
         <!-- Friends Tab -->
         <div id="tab-friends" class="tab-content">
             <h3>دعوة الأصدقاء 👥</h3>
-            <p style="color:#8b949e; font-size:13px; margin-top:8px;">احصل على 1,000 Chick Coins لكل صديق ينضم عبر رابطك!</p>
-            
+            <p style="color:#8b949e; font-size:12px; margin-top:6px;">احصل على 1,000 Chick Coins لكل صديق ينضم عبر رابطك!</p>
             <div class="ref-box" id="refLinkText">https://t.me/ChickCoinGame_bot?start=ref</div>
             <button class="btn-mine" style="margin-top:15px; background:#1f6feb;" onclick="copyRefLink()">نسخ رابط الدعوة 📋</button>
         </div>
@@ -295,19 +264,15 @@
         <!-- Combo Tab -->
         <div id="tab-combo" class="tab-content">
             <h3>الكومبو اليومي 🧩</h3>
-            <p style="color:#8b949e; font-size:13px; margin-top:8px;">اختر الكروت الثلاثة الصحيحة لربح 50,000 قطعة!</p>
+            <p style="color:#8b949e; font-size:12px; margin-top:6px;">شراء كروت التطوير المتاحة لزيادة التعدين</p>
             <div class="task-list">
                 <div class="task-item">
-                    <span>كرت المزرعة الذهبية 🌾</span>
-                    <button class="task-btn" onclick="claimCombo(this, 10000)">فتح (10k)</button>
+                    <span>🌾 كرت المزرعة الذهبية</span>
+                    <button class="task-btn" id="combo-1" onclick="buyCard('combo-1', 5000)">شراء (5,000)</button>
                 </div>
                 <div class="task-item">
-                    <span>كرت الحاصدة الذكية 🚜</span>
-                    <button class="task-btn" onclick="claimCombo(this, 15000)">فتح (15k)</button>
-                </div>
-                <div class="task-item">
-                    <span>كرت الفقاسة الرقمية 🐣</span>
-                    <button class="task-btn" onclick="claimCombo(this, 25000)">فتح (25k)</button>
+                    <span>🚜 كرت الحاصدة الذكية</span>
+                    <button class="task-btn" id="combo-2" onclick="buyCard('combo-2', 10000)">شراء (10,000)</button>
                 </div>
             </div>
         </div>
@@ -315,19 +280,15 @@
         <!-- Tasks Tab -->
         <div id="tab-tasks" class="tab-content">
             <h3>المهام اليومية 📋</h3>
-            <p style="color:#8b949e; font-size:13px; margin-top:8px;">أكمل المهام لزيادة رصيدك فوراً</p>
+            <p style="color:#8b949e; font-size:12px; margin-top:6px;">أكمل المهام الحقيقية لزيادة رصيدك</p>
             <div class="task-list">
                 <div class="task-item">
-                    <span>الانضمام لقناة التلغرام 📢</span>
-                    <button class="task-btn" onclick="completeTask(this, 5000)">+5,000</button>
+                    <span>📢 الانضمام لقناة التلغرام</span>
+                    <button class="task-btn" id="task-tg" onclick="executeTask('task-tg', 'https://t.me/ChickCoinGame_bot', 5000)">انتقال (+5k)</button>
                 </div>
                 <div class="task-item">
-                    <span>متابعة حساب X (تويتر) 🐦</span>
-                    <button class="task-btn" onclick="completeTask(this, 3000)">+3,000</button>
-                </div>
-                <div class="task-item">
-                    <span>تسجيل الدخول اليومي 📅</span>
-                    <button class="task-btn" onclick="completeTask(this, 1000)">+1,000</button>
+                    <span>🐦 متابعة حساب X (تويتر)</span>
+                    <button class="task-btn" id="task-x" onclick="executeTask('task-x', 'https://x.com', 3000)">انتقال (+3k)</button>
                 </div>
             </div>
         </div>
@@ -335,11 +296,11 @@
         <!-- Gift Tab -->
         <div id="tab-gift" class="tab-content">
             <h3>الهدايا والمسابقات 🎁</h3>
-            <p style="color:#8b949e; font-size:13px; margin-top:8px;">سحوبات وجوائز يومية للمستخدمين النشطين!</p>
+            <p style="color:#8b949e; font-size:12px; margin-top:6px;">هدية الدخول اليومي</p>
             <div class="task-list">
                 <div class="task-item">
-                    <span>صندوق الهدية اليومية 📦</span>
-                    <button class="task-btn" onclick="completeTask(this, 2000)">استلام</button>
+                    <span>📦 صندوق الهدية اليومية</span>
+                    <button class="task-btn" id="gift-daily" onclick="claimDailyGift('gift-daily', 1000)">استلام (+1k)</button>
                 </div>
             </div>
         </div>
@@ -347,14 +308,14 @@
         <!-- Profile Tab -->
         <div id="tab-profile" class="tab-content">
             <h3>الملف الشخصي 👤</h3>
-            <div class="task-list" style="margin-top:20px;">
+            <div class="task-list" style="margin-top:15px;">
                 <div class="task-item">
                     <span>اسم المستخدم</span>
                     <strong id="profName">أبو تميم</strong>
                 </div>
                 <div class="task-item">
-                    <span>حالة المحفظة</span>
-                    <span id="walletStatus" style="color:#f85149;">غير متصلة</span>
+                    <span>عنوان المحفظة</span>
+                    <strong id="profWallet" style="font-size:10px; color:#58a6ff;">غير متصلة</strong>
                 </div>
                 <div class="task-item">
                     <span>إجمالي الأرباح</span>
@@ -365,139 +326,202 @@
 
     </div>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- Bottom Navigation -->
     <div class="nav-bar">
-        <div class="nav-item" onclick="switchTab('tab-profile', this)">
-            <span class="nav-icon">👤</span>
-            <span>Profile</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-friends', this)">
-            <span class="nav-icon">👥</span>
-            <span>Friends</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-combo', this)">
-            <span class="nav-icon">🧩</span>
-            <span>Combo</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-tasks', this)">
-            <span class="nav-icon">📋</span>
-            <span>Tasks</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-gift', this)">
-            <span class="nav-icon">🎁</span>
-            <span>Gift</span>
-        </div>
-        <div class="nav-item active" onclick="switchTab('tab-mine', this)">
-            <span class="nav-icon">⛏️</span>
-            <span>Mine</span>
-        </div>
+        <div class="nav-item" onclick="switchTab('tab-profile', this)"><span class="nav-icon">👤</span><span>Profile</span></div>
+        <div class="nav-item" onclick="switchTab('tab-friends', this)"><span class="nav-icon">👥</span><span>Friends</span></div>
+        <div class="nav-item" onclick="switchTab('tab-combo', this)"><span class="nav-icon">🧩</span><span>Combo</span></div>
+        <div class="nav-item" onclick="switchTab('tab-tasks', this)"><span class="nav-icon">📋</span><span>Tasks</span></div>
+        <div class="nav-item" onclick="switchTab('tab-gift', this)"><span class="nav-icon">🎁</span><span>Gift</span></div>
+        <div class="nav-item active" onclick="switchTab('tab-mine', this)"><span class="nav-icon">⛏️</span><span>Mine</span></div>
     </div>
 
     <script>
         // Init Telegram WebApp
         const tg = window.Telegram ? window.Telegram.WebApp : null;
-        if (tg) {
-            tg.expand();
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                document.getElementById('tgName').innerText = user.first_name || 'أبو تميم';
-                document.getElementById('profName').innerText = user.first_name || 'أبو تميم';
-                document.getElementById('tgHandle').innerText = user.username ? '@' + user.username : '@Himaizzo';
-                document.getElementById('tgAvatar').innerText = (user.first_name || 'أ')[0];
-                document.getElementById('refLinkText').innerText = `https://t.me/ChickCoinGame_bot?start=${user.id || 'ref'}`;
+        if (tg) tg.expand();
+
+        // Local Storage State Management
+        let appState = JSON.parse(localStorage.getItem('chick_app_state')) || {
+            coins: 0,
+            miningActive: false,
+            miningStartTime: null,
+            completedTasks: []
+        };
+
+        function saveState() {
+            localStorage.setItem('chick_app_state', JSON.stringify(appState));
+            updateUI();
+        }
+
+        // Init TON Connect Wallet UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://ibrahimizzeldin.github.io/Chick-coin/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-btn'
+        });
+
+        tonConnectUI.onStatusChange(wallet => {
+            if (wallet) {
+                const address = wallet.account.address;
+                const shortAddr = address.substring(0, 4) + '...' + address.substring(address.length - 4);
+                document.getElementById('profWallet').innerText = shortAddr;
+            } else {
+                document.getElementById('profWallet').innerText = 'غير متصلة';
+            }
+        });
+
+        // Initialize User Info
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const u = tg.initDataUnsafe.user;
+            document.getElementById('tgName').innerText = u.first_name || 'أبو تميم';
+            document.getElementById('profName').innerText = u.first_name || 'أبو تميم';
+            document.getElementById('tgHandle').innerText = u.username ? '@' + u.username : '@Himaizzo';
+            document.getElementById('tgAvatar').innerText = (u.first_name || 'أ')[0];
+            document.getElementById('refLinkText').innerText = `https://t.me/ChickCoinGame_bot?start=${u.id}`;
+        }
+
+        // UI Updater
+        function updateUI() {
+            document.getElementById('chickCoins').innerText = Math.floor(appState.coins);
+            document.getElementById('profTotal').innerText = Math.floor(appState.coins) + ' Chick';
+            
+            // Restore Completed Buttons State
+            appState.completedTasks.forEach(taskId => {
+                const btn = document.getElementById(taskId);
+                if (btn) {
+                    btn.innerText = 'تم ✓';
+                    btn.classList.add('done');
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        // Mining Timer Logic
+        let timerInterval = null;
+        function checkMiningStatus() {
+            if (appState.miningActive && appState.miningStartTime) {
+                const now = Math.floor(Date.now() / 1000);
+                const elapsed = now - appState.miningStartTime;
+                const totalDuration = 8 * 3600; // 8 Hours
+
+                if (elapsed < totalDuration) {
+                    const remaining = totalDuration - elapsed;
+                    startMiningUI(remaining);
+                } else {
+                    // Mining completed while away
+                    appState.miningActive = false;
+                    appState.coins += 100; // Reward
+                    saveState();
+                    resetMineButton();
+                }
             }
         }
 
-        // State Variables
-        let totalCoins = 0;
-        let isMining = false;
-        let miningTimeSeconds = 8 * 3600; // 8 Hours
-        let miningInterval = null;
-        let currentMined = 0.00000000;
+        function toggleMining() {
+            if (appState.miningActive) return;
 
-        function updateUI() {
-            document.getElementById('chickCoins').innerText = Math.floor(totalCoins);
-            document.getElementById('profTotal').innerText = Math.floor(totalCoins) + ' Chick';
-            document.getElementById('miningCounter').innerText = currentMined.toFixed(8);
+            appState.miningActive = true;
+            appState.miningStartTime = Math.floor(Date.now() / 1000);
+            saveState();
+            startMiningUI(8 * 3600);
         }
 
-        function startMining() {
-            if (isMining) return;
-
-            isMining = true;
+        function startMiningUI(secondsLeft) {
             const btn = document.getElementById('mineBtn');
             btn.innerText = '⚡ Mining Active...';
             btn.classList.add('mining');
 
-            miningInterval = setInterval(() => {
-                if (miningTimeSeconds > 0) {
-                    miningTimeSeconds--;
-                    currentMined += 0.00001157; // Increments to ~0.33 per 8 hours
-                    totalCoins += 0.00001157;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsLeft--;
+                appState.coins += 0.00001;
+                document.getElementById('chickCoins').innerText = Math.floor(appState.coins);
+                document.getElementById('miningCounter').innerText = (secondsLeft * 0.00001).toFixed(8);
 
-                    // Format Time
-                    const hrs = String(Math.floor(miningTimeSeconds / 3600)).padStart(2, '0');
-                    const mins = String(Math.floor((miningTimeSeconds % 3600) / 60)).padStart(2, '0');
-                    const secs = String(miningTimeSeconds % 60).padStart(2, '0');
-                    document.getElementById('timerDisplay').innerText = `${hrs}:${mins}:${secs}`;
+                const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+                const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+                const s = String(secondsLeft % 60).padStart(2, '0');
+                document.getElementById('timerDisplay').innerText = `${h}:${m}:${s}`;
 
-                    updateUI();
-                } else {
-                    clearInterval(miningInterval);
-                    isMining = false;
-                    btn.innerText = 'Claim Coins 🐣';
-                    btn.classList.remove('mining');
-                    btn.onclick = claimMinedCoins;
+                if (secondsLeft <= 0) {
+                    clearInterval(timerInterval);
+                    appState.miningActive = false;
+                    appState.coins += 100;
+                    saveState();
+                    resetMineButton();
                 }
             }, 1000);
         }
 
-        function claimMinedCoins() {
-            totalCoins += 100; // Reward bonus
-            currentMined = 0;
-            miningTimeSeconds = 8 * 3600;
-            updateUI();
+        function resetMineButton() {
             const btn = document.getElementById('mineBtn');
             btn.innerText = 'Start Mining';
-            btn.onclick = startMining;
+            btn.classList.remove('mining');
+            document.getElementById('timerDisplay').innerText = "08:00:00";
+            document.getElementById('miningCounter').innerText = "0.00000000";
+        }
+
+        // Real Task Execution (Opens External Link First)
+        function executeTask(taskId, link, reward) {
+            if (appState.completedTasks.includes(taskId)) return;
+
+            if (tg) {
+                tg.openLink(link);
+            } else {
+                window.open(link, '_blank');
+            }
+
+            const btn = document.getElementById(taskId);
+            btn.innerText = 'جاري التحقق...';
+            
+            setTimeout(() => {
+                appState.coins += reward;
+                appState.completedTasks.push(taskId);
+                saveState();
+                btn.innerText = 'تم ✓';
+                btn.classList.add('done');
+                btn.disabled = true;
+            }, 3000);
+        }
+
+        // Buy Combo Card (Requires balance)
+        function buyCard(cardId, price) {
+            if (appState.completedTasks.includes(cardId)) return;
+
+            if (appState.coins >= price) {
+                appState.coins -= price;
+                appState.completedTasks.push(cardId);
+                saveState();
+                alert('تم شراء الكرت بنجاح!');
+            } else {
+                alert('رصيدك غير كافي لشراء هذا الكرت!');
+            }
+        }
+
+        // Daily Gift Claim
+        function claimDailyGift(giftId, reward) {
+            if (appState.completedTasks.includes(giftId)) return;
+
+            appState.coins += reward;
+            appState.completedTasks.push(giftId);
+            saveState();
         }
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
         }
 
-        function completeTask(btn, reward) {
-            totalCoins += reward;
-            updateUI();
-            btn.innerText = 'تم ✓';
-            btn.classList.add('done');
-            btn.disabled = true;
-        }
-
-        function claimCombo(btn, reward) {
-            totalCoins += reward;
-            updateUI();
-            btn.innerText = 'مفتوح ✓';
-            btn.classList.add('done');
-            btn.disabled = true;
-        }
-
         function copyRefLink() {
             const link = document.getElementById('refLinkText').innerText;
-            navigator.clipboard.writeText(link).then(() => {
-                alert('تم نسخ رابط الدعوة بنجاح!');
-            });
+            navigator.clipboard.writeText(link).then(() => alert('تم نسخ رابط الدعوة!'));
         }
 
-        function connectWallet() {
-            document.getElementById('walletStatus').innerText = 'متصلة (TON)';
-            document.getElementById('walletStatus').style.color = '#2ea043';
-            alert('تم ربط محفظة TON بنجاح!');
-        }
+        // Run On Start
+        updateUI();
+        checkMiningStatus();
     </script>
 </body>
 </html>
