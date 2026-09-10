@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chick Coin App</title>
+    <!-- جلب مكتبة تلغرام الرسمية -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #161b22;
+            --accent-green: #10b981;
+            --accent-blue: #0088cc;
+            --text-color: #ffffff;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        /* الهيدر العلوي */
+        .header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #21262d;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .wallet-btn {
+            background: rgba(0, 136, 204, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* شاشة المحتوى */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tab-page {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+
+        .tab-page.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* عدادات الأرباح */
+        .stats-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #21262d;
+        }
+
+        .stat-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* زر التعدين الكبير */
+        .mining-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-start {
+            background: var(--accent-green);
+        }
+
+        .btn-claim {
+            background: var(--accent-blue);
+        }
+
+        /* القائمة السفلية */
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background: var(--card-bg);
+            padding: 10px 0;
+            border-top: 1px solid #21262d;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-decoration: none;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-blue);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر العلوي -->
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar" id="user-avatar">C</div>
+            <div>
+                <div id="user-name" style="font-weight: bold; font-size: 14px;">User</div>
+                <div id="user-id" style="font-size: 11px; color: var(--text-muted);">@username</div>
+            </div>
+        </div>
+        <button class="wallet-btn" onclick="alert('سيتوفر ربط المحفظة قريباً!')">Connect Wallet</button>
+    </div>
+
+    <!-- منطقة المحتوى المتغير -->
+    <div class="content">
+        
+        <!-- صفحة التعدين (Mine) -->
+        <div id="tab-mine" class="tab-page active">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-title">Chick Coins</div>
+                    <div class="stat-value" id="chick-balance">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Gram Coins</div>
+                    <div class="stat-value" id="gram-balance">0.0000</div>
+                </div>
+            </div>
+
+            <div style="margin: 40px 0;">
+                <div style="font-size: 48px;">🐥</div>
+                <div style="font-size: 28px; font-weight: bold; margin-top: 10px;" id="mined-amount">0.00000000</div>
+                <div style="color: var(--text-muted); font-size: 13px; margin-top: 5px;" id="timer">00:00:00</div>
+            </div>
+
+            <button class="mining-btn btn-start" id="mine-btn" onclick="startMining()">Start Mining</button>
+        </div>
+
+        <!-- صفحة الهدايا (Gift) -->
+        <div id="tab-gift" class="tab-page">
+            <h2>🎁 الهدايا والمسابقات</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">قريباً سحوبات على جوائز رقمية!</p>
+        </div>
+
+        <!-- صفحة المهام (Tasks) -->
+        <div id="tab-tasks" class="tab-page">
+            <h2>📋 المهام اليومية</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">أكمل المهام لزيادة رصيدك من Chick Coins.</p>
+        </div>
+
+        <!-- صفحة الكومبو (Combo) -->
+        <div id="tab-combo" class="tab-page">
+            <h2>🧩 الكومبو اليومي</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">خمن التشكيلة الصحيحة اليوم للحصول على مكافأة!</p>
+        </div>
+
+        <!-- صفحة الأصدقاء (Friends) -->
+        <div id="tab-friends" class="tab-page">
+            <h2>👥 دعوة الأصدقاء</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">احصل على مكافآت لكل صديق ينضم عبر رابطك.</p>
+        </div>
+
+        <!-- صفحة الحساب (Profile) -->
+        <div id="tab-profile" class="tab-page">
+            <h2>👤 الملف الشخصي</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">إعدادات الحساب والمحفظة.</p>
+        </div>
+
+    </div>
+
+    <!-- الشريط السفلي للتنقل -->
+    <div class="navbar">
+        <div class="nav-item active" onclick="switchTab('mine', this)">
+            <span class="nav-icon">⛏️</span>
+            <span>Mine</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('gift', this)">
+            <span class="nav-icon">🎁</span>
+            <span>Gift</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tasks', this)">
+            <span class="nav-icon">📋</span>
+            <span>Tasks</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('combo', this)">
+            <span class="nav-icon">🧩</span>
+            <span>Combo</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('friends', this)">
+            <span class="nav-icon">👥</span>
+            <span>Friends</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile', this)">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة تلغرام WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand(); // توسيع الشاشة
+            if (tg.initDataUnsafe?.user) {
+                const user = tg.initDataUnsafe.user;
+                document.getElementById('user-name').innerText = user.first_name || 'User';
+                document.getElementById('user-id').innerText = '@' + (user.username || 'no_user');
+                document.getElementById('user-avatar').innerText = (user.first_name || 'U')[0].toUpperCase();
+            }
+        }
+
+        // التنقل بين التبويبات
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // محاكاة زر التعدين
+        function startMining() {
+            const btn = document.getElementById('mine-btn');
+            btn.innerText = 'Mining Active...';
+            btn.style.background = '#374151';
+            btn.disabled = true;
+        }
+    </script>
+</body>
+</html>
