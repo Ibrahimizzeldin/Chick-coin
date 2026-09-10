@@ -5,18 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chick Coin - Mine & Earn</title>
   
-  <!-- المكتبة الرسمية لتليجرام (ضرورية لتجاوز شاشة التحميل) -->
+  <!-- مكتبة تليجرام المباشرة -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // تفعيل إشارة الجاهزية فوراً لمنع الشاشة البيضاء
+    try {
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      }
+    } catch(e) {
+      console.error("Telegram WebApp Init Error:", e);
+    }
+  </script>
 
-  <!-- استيراد الخطوط الاحترافية مع خاصية التحميل غير الحاضر display=swap -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
-  
   <style>
     :root {
       --bg-color: #0b0f17;
-      --card-bg: rgba(23, 32, 48, 0.7);
+      --card-bg: rgba(23, 32, 48, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
       --accent-ton: #0088cc;
       --accent-gram: #10b981;
@@ -34,7 +40,7 @@
     }
 
     body {
-      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+      font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-main);
       min-height: 100vh;
@@ -46,7 +52,7 @@
     }
 
     .num-font {
-      font-family: 'Inter', monospace, sans-serif;
+      font-family: 'Inter', system-ui, monospace, sans-serif;
       font-variant-numeric: tabular-nums;
       direction: ltr;
       display: inline-block;
@@ -57,9 +63,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 20px;
-      background: rgba(11, 15, 23, 0.9);
-      backdrop-filter: blur(10px);
+      padding: 14px 18px;
+      background: rgba(11, 15, 23, 0.95);
       border-bottom: 1px solid var(--card-border);
       position: sticky;
       top: 0;
@@ -73,28 +78,25 @@
     }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--accent-ton), var(--accent-chick));
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .wallet-btn {
       background: rgba(0, 136, 204, 0.15);
       border: 1px solid var(--accent-ton);
       color: var(--accent-ton);
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
       cursor: pointer;
     }
 
@@ -102,82 +104,83 @@
     .balance-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 16px 20px;
+      gap: 10px;
+      padding: 14px 18px;
     }
 
     .balance-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 12px;
       text-align: center;
     }
 
     .balance-title {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
       margin-bottom: 4px;
     }
 
     .balance-value {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
     }
 
     .val-chick { color: var(--accent-chick); }
     .val-gram { color: var(--accent-gram); }
 
-    /* منطقة التعدين الرئيسية */
+    /* منطقة التعدين */
     .mining-section {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 10px 20px;
       flex-grow: 1;
     }
 
     .chick-stage {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: 190px;
+      height: 190px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .glow-aura {
       position: absolute;
-      width: 170px;
-      height: 170px;
+      width: 160px;
+      height: 160px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,136,204,0.4) 0%, rgba(245,158,11,0.2) 60%, transparent 100%);
-      animation: pulseGlow 2.5s infinite ease-in-out;
+      background: radial-gradient(circle, rgba(0,136,204,0.35) 0%, rgba(245,158,11,0.15) 70%, transparent 100%);
+      animation: pulseGlow 2.2s infinite ease-in-out;
       z-index: 1;
     }
 
     @keyframes pulseGlow {
-      0%, 100% { transform: scale(0.95); opacity: 0.6; }
-      50% { transform: scale(1.15); opacity: 0.9; }
+      0%, 100% { transform: scale(0.95); opacity: 0.5; }
+      50% { transform: scale(1.12); opacity: 0.9; }
     }
 
     .chick-avatar {
-      width: 170px;
-      height: 170px;
+      width: 160px;
+      height: 160px;
       border-radius: 50%;
       object-fit: cover;
       position: relative;
       z-index: 2;
-      border: 3px solid rgba(0, 136, 204, 0.5);
+      border: 3px solid rgba(0, 136, 204, 0.6);
+      background-color: #1e293b;
     }
 
     .pickaxe {
       position: absolute;
-      top: -10px;
+      top: -5px;
       left: 10px;
-      font-size: 44px;
+      font-size: 42px;
       z-index: 3;
       transform-origin: bottom right;
       display: none;
@@ -185,46 +188,46 @@
 
     .mining-active .pickaxe {
       display: block;
-      animation: swingAxe 0.8s infinite ease-in-out;
+      animation: swingAxe 0.7s infinite ease-in-out;
     }
 
     @keyframes swingAxe {
       0% { transform: rotate(0deg); }
-      50% { transform: rotate(-40deg) scale(1.15); }
+      50% { transform: rotate(-35deg) scale(1.1); }
       100% { transform: rotate(0deg); }
     }
 
     /* العداد الانسيابي */
     .live-counter-box {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .ticker-number {
-      font-size: 36px;
+      font-size: 34px;
       font-weight: 800;
       color: #38ef7d;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .timer-text {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .btn-mine {
       width: 100%;
-      max-width: 320px;
-      padding: 16px;
-      border-radius: 16px;
+      max-width: 300px;
+      padding: 14px;
+      border-radius: 14px;
       border: none;
       background: linear-gradient(135deg, #0088cc, #005588);
       color: #fff;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 136, 204, 0.35);
     }
 
     .btn-mine:disabled {
@@ -240,7 +243,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 70px;
+      height: 65px;
       background: rgba(15, 23, 42, 0.98);
       border-top: 1px solid var(--card-border);
       display: flex;
@@ -253,7 +256,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       color: var(--text-muted);
       font-size: 11px;
       font-weight: 600;
@@ -262,17 +265,17 @@
     }
 
     .nav-item.active { color: var(--accent-ton); }
-    .nav-icon { font-size: 20px; }
+    .nav-icon { font-size: 18px; }
 
-    .tab-content { display: none; padding: 20px; }
+    .tab-content { display: none; padding: 18px; }
     .tab-content.active { display: block; }
 
     .profile-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 12px;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -280,15 +283,15 @@
 
     .btn-withdraw {
       width: 100%;
-      padding: 16px;
-      border-radius: 16px;
+      padding: 14px;
+      border-radius: 14px;
       border: none;
       background: linear-gradient(135deg, #10b981, #059669);
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 8px;
     }
   </style>
 </head>
@@ -299,12 +302,12 @@
     <div class="user-info">
       <div class="avatar" id="userAvatar">أ</div>
       <div>
-        <div style="font-size: 14px; font-weight: 700;" id="userName">المستخدم</div>
-        <div style="font-size: 11px; color: var(--text-muted);" class="num-font" id="userHandle">@user</div>
+        <div style="font-size: 13px; font-weight: 700;" id="userName">المستخدم</div>
+        <div style="font-size: 10px; color: var(--text-muted);" class="num-font" id="userHandle">@user</div>
       </div>
     </div>
     <button class="wallet-btn num-font" id="walletBtn">
-      <span id="walletShort">غير متصل</span> ▼
+      <span id="walletShort">UQCx...2D5k</span>
     </button>
   </header>
 
@@ -326,7 +329,8 @@
       <div class="chick-stage" id="chickStage">
         <div class="glow-aura"></div>
         <div class="pickaxe">⛏️</div>
-        <img src="1001348690.png" alt="Chick Mining" class="chick-avatar" onerror="this.src='https://dummyimage.com/170x170/0088cc/ffffff.png&text=Chick+Coin'">
+        <!-- صورة الكتكوت مع صورة احتياطية مدمجة بالكامل لعدم التوقف -->
+        <img src="1001348690.png" alt="Chick Mining" class="chick-avatar" id="chickImg" onerror="handleImgError(this)">
       </div>
 
       <div class="live-counter-box">
@@ -340,10 +344,10 @@
 
   <!-- تبويب المهام -->
   <div id="tab-tasks" class="tab-content">
-    <h2 style="margin-bottom: 16px; font-size: 18px;">المهام اليومية والإعلانات</h2>
+    <h3 style="margin-bottom: 14px; font-size: 16px;">المهام اليومية والإعلانات</h3>
     <div class="profile-card">
       <div>
-        <div style="font-weight: 700;">مشاهدة إعلان Adsgram</div>
+        <div style="font-size: 14px; font-weight: 700;">مشاهدة إعلان Adsgram</div>
         <div style="font-size: 12px; color: var(--accent-gram);" class="num-font">+0.004 Gram</div>
       </div>
       <button class="wallet-btn" onclick="alert('جاري تحميل الإعلان...')">مشاهدة</button>
@@ -352,26 +356,26 @@
 
   <!-- تبويب الأصدقاء -->
   <div id="tab-friends" class="tab-content">
-    <h2 style="margin-bottom: 16px; font-size: 18px;">دعوة الأصدقاء</h2>
+    <h3 style="margin-bottom: 14px; font-size: 16px;">دعوة الأصدقاء</h3>
     <div class="profile-card" style="text-align: center; display: block;">
-      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">احصل على 10% من أرباح كل صديق تقوم بدعوته!</p>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">احصل على 10% من أرباح كل صديق تقوم بدعوته!</p>
       <button class="btn-mine" style="width: 100%;" onclick="alert('تم نسخ رابط الدعوة!')">نسخ رابط الدعوة 🔗</button>
     </div>
   </div>
 
   <!-- تبويب الملف الشخصي -->
   <div id="tab-profile" class="tab-content">
-    <h2 style="margin-bottom: 16px; font-size: 18px;">الملف الشخصي والعملات 👤</h2>
+    <h3 style="margin-bottom: 14px; font-size: 16px;">الملف الشخصي والعملات 👤</h3>
     <div class="profile-card">
-      <span style="color: var(--text-muted);">اسم المستخدم</span>
-      <span style="font-weight: 700;" id="profName">المستخدم</span>
+      <span style="color: var(--text-muted); font-size: 13px;">اسم المستخدم</span>
+      <span style="font-weight: 700; font-size: 14px;" id="profName">المستخدم</span>
     </div>
     <div class="profile-card">
-      <span style="color: var(--text-muted);">أرباح Gram</span>
+      <span style="color: var(--text-muted); font-size: 13px;">أرباح Gram</span>
       <span class="val-gram num-font" id="profGram">Gram 0.0090</span>
     </div>
     <div class="profile-card">
-      <span style="color: var(--text-muted);">نقاط Chick</span>
+      <span style="color: var(--text-muted); font-size: 13px;">نقاط Chick</span>
       <span class="val-chick num-font" id="profChick">Chick 100</span>
     </div>
     <button class="btn-withdraw" onclick="alert('سيتم سحب الأرباح فوراً')">💸 سحب الأرباح إلى المحفظة</button>
@@ -398,24 +402,27 @@
   </nav>
 
   <script>
-    // تهيئة تليجرام المباشرة للتعامل مع الشاشة البيضاء
-    let tg = window.Telegram ? window.Telegram.WebApp : null;
+    // الصورة الاحتياطية المدمجة كـ SVG مباشر
+    function handleImgError(img) {
+      img.onerror = null;
+      img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%230088cc"/><text x="50%" y="55%" font-size="40" text-anchor="middle" dominant-baseline="middle">🐥</text></svg>';
+    }
 
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      
-      // جلب بيانات المستخدم المباشرة من تليجرام
-      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    // ربط Telegram WebApp
+    try {
+      const tg = window.Telegram ? window.Telegram.WebApp : null;
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
-        const name = u.first_name + (u.last_name ? " " + u.last_name : "");
-        document.getElementById('userName').innerText = name;
-        document.getElementById('profName').innerText = name;
-        document.getElementById('userAvatar').innerText = u.first_name.charAt(0);
+        const fullName = u.first_name + (u.last_name ? " " + u.last_name : "");
+        document.getElementById('userName').innerText = fullName;
+        document.getElementById('profName').innerText = fullName;
+        document.getElementById('userAvatar').innerText = u.first_name ? u.first_name.charAt(0) : 'أ';
         if (u.username) {
           document.getElementById('userHandle').innerText = "@" + u.username;
         }
       }
+    } catch(e) {
+      console.log("TG User Data Fetch Error:", e);
     }
 
     let isMining = false;
@@ -426,28 +433,19 @@
     let baseChickBalance = 100.0;
     let animFrameId = null;
 
-    // قراءة آمنة من Storage لمنع الانهيار
     function getSafeStorage(key) {
-      try {
-        return localStorage.getItem(key);
-      } catch (e) {
-        return null;
-      }
+      try { return localStorage.getItem(key); } catch (e) { return null; }
     }
 
     function setSafeStorage(key, value) {
-      try {
-        localStorage.setItem(key, value);
-      } catch (e) {}
+      try { localStorage.setItem(key, value); } catch (e) {}
     }
 
     function removeSafeStorage(key) {
-      try {
-        localStorage.removeItem(key);
-      } catch (e) {}
+      try { localStorage.removeItem(key); } catch (e) {}
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('load', () => {
       const savedStartTime = getSafeStorage('chick_mining_start');
       if (savedStartTime) {
         const elapsed = (Date.now() - parseInt(savedStartTime)) / 1000;
