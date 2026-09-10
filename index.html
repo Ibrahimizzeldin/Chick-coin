@@ -1,629 +1,578 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chick Coin App</title>
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- TON Connect SDK -->
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            user-select: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chick Coin - Mine & Earn</title>
+  
+  <!-- استيراد الخطوط الاحترافية: Cairo للنصوص العربية و Inter للأرقام المتميزة -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f17;
+      --card-bg: rgba(23, 32, 48, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-ton: #0088cc;
+      --accent-gram: #10b981;
+      --accent-chick: #f59e0b;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+    }
 
-        body {
-            background-color: #0d1117;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            justify-content: space-between;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
-        }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      padding-bottom: 80px;
+    }
 
-        #ton-connect-btn { scale: 0.85; }
+    /* خط الأرقام والعملات ثابت الاتساع لتفادي الاهتزاز أثناء التعدين */
+    .num-font {
+      font-family: 'Inter', sans-serif;
+      font-variant-numeric: tabular-nums;
+      direction: ltr;
+      display: inline-block;
+    }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    /* الهيدر العلوي */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(11, 15, 23, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: #238636;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        .user-name { font-size: 13px; font-weight: 600; }
-        .user-handle { font-size: 11px; color: #8b949e; }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-ton), var(--accent-chick));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 0 10px rgba(0, 136, 204, 0.4);
+    }
 
-        /* Container & Tabs */
-        .container {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    .wallet-btn {
+      background: rgba(0, 136, 204, 0.15);
+      border: 1px solid var(--accent-ton);
+      color: var(--accent-ton);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
 
-        .tab-content {
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+    /* كروت الرصيد */
+    .balance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px 20px;
+    }
 
-        .tab-content.active {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    .balance-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
 
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
+    .balance-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
 
-        .stat-card {
-            background: #161b22;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #30363d;
-        }
+    .balance-value {
+      font-size: 18px;
+      font-weight: 800;
+    }
 
-        .stat-title { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
-        .stat-value { font-size: 15px; font-weight: bold; color: #58a6ff; }
-        .stat-value.gram { color: #f2a900; }
+    .val-chick { color: var(--accent-chick); }
+    .val-gram { color: var(--accent-gram); }
 
-        /* Chick Icon & Mine */
-        .chick-icon {
-            font-size: 75px;
-            margin: 10px 0;
-            animation: pulse 2s infinite;
-        }
+    /* منطقة التعدين الرئيسية والأنيميشن */
+    .mining-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      flex-grow: 1;
+    }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+    .chick-stage {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
 
-        .coin-counter {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-family: monospace;
-            color: #2ea043;
-        }
+    /* هالة التوهج خلف الكتكوت */
+    .glow-aura {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,136,204,0.4) 0%, rgba(245,158,11,0.2) 60%, transparent 100%);
+      animation: pulseGlow 2.5s infinite ease-in-out;
+      z-index: 1;
+    }
 
-        .timer {
-            font-size: 13px;
-            color: #8b949e;
-            margin-bottom: 20px;
-            font-family: monospace;
-        }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 0.9; filter: drop-shadow(0 0 25px var(--accent-ton)); }
+    }
 
-        .btn-mine {
-            width: 100%;
-            padding: 14px;
-            background: #238636;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
-        }
+    /* صورة الكتكوت */
+    .chick-avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      object-fit: cover;
+      position: relative;
+      z-index: 2;
+      border: 3px solid rgba(0, 136, 204, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
 
-        .btn-mine.mining {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #8b949e;
-            box-shadow: none;
-        }
+    /* أنيميشن الفأس المضيء */
+    .pickaxe {
+      position: absolute;
+      top: -10px;
+      left: 15px;
+      font-size: 48px;
+      z-index: 3;
+      transform-origin: bottom right;
+      filter: drop-shadow(0 0 12px var(--accent-chick));
+      display: none; /* يظهر عند التعدين فقط */
+    }
 
-        /* Lists & Forms */
-        .task-list {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-        }
+    .mining-active .pickaxe {
+      display: block;
+      animation: swingAxe 0.8s infinite ease-in-out;
+    }
 
-        .task-item {
-            background: #161b22;
-            border: 1px solid #30363d;
-            padding: 12px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
+    @keyframes swingAxe {
+      0% { transform: rotate(0deg); }
+      50% { transform: rotate(-40deg) scale(1.15); }
+      100% { transform: rotate(0deg); }
+    }
 
-        .task-btn {
-            background: #1f6feb;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+    /* تطاير العملات أثناء التعدين */
+    .floating-coin {
+      position: absolute;
+      font-size: 20px;
+      z-index: 4;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-        .task-btn.done {
-            background: #238636;
-            cursor: default;
-        }
+    .mining-active .floating-coin {
+      animation: floatUp 1.6s infinite linear;
+    }
 
-        .form-input, .form-select {
-            width: 100%;
-            padding: 10px;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            color: white;
-            margin-top: 8px;
-            font-size: 13px;
-        }
+    @keyframes floatUp {
+      0% { transform: translateY(20px) scale(0.5); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-80px) scale(1.2); opacity: 0; }
+    }
 
-        .ref-box {
-            background: #161b22;
-            border: 1px dashed #30363d;
-            padding: 12px;
-            border-radius: 10px;
-            width: 100%;
-            margin-top: 15px;
-            word-break: break-all;
-            font-size: 12px;
-            color: #58a6ff;
-        }
+    /* العداد الانسيابي المباشر */
+    .live-counter-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-        /* Bottom Nav */
-        .nav-bar {
-            display: flex;
-            justify-content: space-around;
-            background: #161b22;
-            border-top: 1px solid #30363d;
-            padding: 10px 0;
-        }
+    .ticker-number {
+      font-size: 38px;
+      font-weight: 800;
+      color: #38ef7d;
+      text-shadow: 0 0 15px rgba(56, 239, 125, 0.4);
+      letter-spacing: 1px;
+    }
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #8b949e;
-            font-size: 11px;
-            cursor: pointer;
-            gap: 4px;
-            flex: 1;
-        }
+    .timer-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
 
-        .nav-item.active { color: #58a6ff; }
-        .nav-icon { font-size: 18px; }
-    </style>
+    /* زر التعدين */
+    .btn-mine {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #0088cc, #005588);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: 'Cairo', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-mine:active {
+      transform: scale(0.98);
+    }
+
+    .btn-mine:disabled {
+      background: #2a3447;
+      color: #64748b;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* تبويبات التطبيق Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 25%;
+    }
+
+    .nav-item.active {
+      color: var(--accent-ton);
+    }
+
+    .nav-icon {
+      font-size: 22px;
+    }
+
+    /* إخفاء الصفحات غير النشطة */
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* تصميم صفحة الملف الشخصي المحسنة */
+    .profile-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .profile-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .profile-val {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .btn-withdraw {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: 'Cairo', sans-serif;
+      margin-top: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <div class="header">
-        <div id="ton-connect-btn"></div>
-        <div class="user-info">
-            <div style="text-align: left;">
-                <div class="user-name" id="tgName">أبو تميم</div>
-                <div class="user-handle" id="tgHandle">@Himaizzo</div>
-            </div>
-            <div class="user-avatar" id="tgAvatar">أ</div>
-        </div>
+  <!-- الهيدر -->
+  <header>
+    <div class="user-info">
+      <div class="avatar" id="userAvatar">أ</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700;" id="userName">أبو تميم</div>
+        <div style="font-size: 11px; color: var(--text-muted);" class="num-font" id="userHandle">@Himaizzo</div>
+      </div>
+    </div>
+    <button class="wallet-btn num-font" id="walletBtn">
+      <span>UQCx...2D5k</span> ▼
+    </button>
+  </header>
+
+  <!-- كروت الأرباح والنقاط -->
+  <div class="balance-grid">
+    <div class="balance-card">
+      <div class="balance-title">رصيد التعدين (Chick)</div>
+      <div class="balance-value val-chick num-font" id="chickBalanceDisplay">Chick 100.00</div>
+    </div>
+    <div class="balance-card">
+      <div class="balance-title">رصيد الأرباح (Gram)</div>
+      <div class="balance-value val-gram num-font" id="gramBalanceDisplay">Gram 0.0090</div>
+    </div>
+  </div>
+
+  <!-- تبويب التعدين (Main Tab) -->
+  <div id="tab-mine" class="tab-content active">
+    <div class="mining-section">
+      
+      <!-- مسرح الكتكوت والأنيميشن -->
+      <div class="chick-stage" id="chickStage">
+        <div class="glow-aura"></div>
+        <div class="pickaxe">⛏️</div>
+        <div class="floating-coin" style="left: 30%;">🪙</div>
+        <div class="floating-coin" style="left: 70%; animation-delay: 0.8s;">⚡</div>
+        <img src="1001348690.png" alt="Chick Mining" class="chick-avatar" onerror="this.src='https://via.placeholder.com/180/0088cc/ffffff?text=Chick+Coin'">
+      </div>
+
+      <!-- العداد الانسيابي اللحظي -->
+      <div class="live-counter-box">
+        <div class="ticker-number num-font" id="liveTicker">0.0000000</div>
+        <div class="timer-text num-font" id="timerDisplay"> جاهز للبدء</div>
+      </div>
+
+      <!-- زر التشغيل -->
+      <button class="btn-mine" id="mineBtn" onclick="toggleMining()">بدء التعدين الآن 🚀</button>
+    </div>
+  </div>
+
+  <!-- تبويب المهام (Tasks) -->
+  <div id="tab-tasks" class="tab-content">
+    <h2 style="margin-bottom: 16px; font-size: 18px;">المهام اليومية والإعلانات</h2>
+    <div class="profile-card">
+      <div>
+        <div style="font-weight: 700;">مشاهدة إعلان Adsgram</div>
+        <div style="font-size: 12px; color: var(--accent-gram);" class="num-font">+0.004 Gram</div>
+      </div>
+      <button class="wallet-btn" onclick="alert('جاري تحميل الإعلان...')">مشاهدة</button>
+    </div>
+  </div>
+
+  <!-- تبويب الأصدقاء (Friends) -->
+  <div id="tab-friends" class="tab-content">
+    <h2 style="margin-bottom: 16px; font-size: 18px;">دعوة الأصدقاء</h2>
+    <div class="profile-card" style="text-align: center; display: block;">
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px;">احصل على 10% من أرباح كل صديق تقوم بدعوته!</p>
+      <button class="btn-mine" style="width: 100%;" onclick="alert('تم نسخ رابط الدعوة!')">نسخ رابط الدعوة 🔗</button>
+    </div>
+  </div>
+
+  <!-- تبويب الملف الشخصي (Profile) -->
+  <div id="tab-profile" class="tab-content">
+    <h2 style="margin-bottom: 16px; font-size: 18px;">الملف الشخصي والعملات 👤</h2>
+    
+    <div class="profile-card">
+      <span class="profile-label">اسم المستخدم</span>
+      <span class="profile-val" id="profName">أبو تميم</span>
     </div>
 
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Mine Tab -->
-        <div id="tab-mine" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">رصيد الأرباح (Gram)</div>
-                    <div class="stat-value gram" id="gramCoins">0.0000 Gram</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">رصيد التعدين (Chick)</div>
-                    <div class="stat-value" id="chickCoins">0 Chick</div>
-                </div>
-            </div>
-
-            <div class="chick-icon">🐣</div>
-            <div class="coin-counter" id="miningCounter">0.00000000</div>
-            <div class="timer" id="timerDisplay">08:00:00</div>
-
-            <button class="btn-mine" id="mineBtn" onclick="startMiningProcess()">بدء التعدين المجاني</button>
-        </div>
-
-        <!-- Friends Tab -->
-        <div id="tab-friends" class="tab-content">
-            <h3>دعوة الأصدقاء 👥</h3>
-            <p style="color:#8b949e; font-size:12px; margin-top:6px;">احصل على 1,000 Chick Coins لكل صديق ينضم عبر رابطك!</p>
-            <div class="ref-box" id="refLinkText">https://t.me/ChickCoinGame_bot?start=ref</div>
-            <button class="btn-mine" style="margin-top:15px; background:#1f6feb;" onclick="copyRefLink()">نسخ رابط الدعوة 📋</button>
-        </div>
-
-        <!-- Tasks & Ads Tab -->
-        <div id="tab-tasks" class="tab-content">
-            <h3>المهام والإعلانات المدفوعة 📋</h3>
-            <p style="color:#8b949e; font-size:12px; margin-top:6px;">أكمل المهام أو شاهد الإعلانات لكسب عملة Gram حقيقية</p>
-            
-            <div class="task-list" id="dynamicTasksList">
-                <div class="task-item">
-                    <span>📢 الاشتراك في القناة الرسمية</span>
-                    <button class="task-btn" id="task-tg-off" onclick="executeRealTask('task-tg-off', 'https://t.me/ChickCoinGame_bot', 0.01, 'TASK')">انضمام (+0.005 Gram)</button>
-                </div>
-                <div class="task-item">
-                    <span>🎬 مشاهدة إعلان راعي القناة</span>
-                    <button class="task-btn" id="task-ad-view" onclick="executeRealTask('task-ad-view', 'https://t.me/ChickCoinGame_bot', 0.01, 'VIEW')">مشاهدة (+0.004 Gram)</button>
-                </div>
-            </div>
-
-            <!-- لوحة المعلنين بسعر ثابت -->
-            <div style="margin-top:25px; width:100%; background:#161b22; padding:15px; border-radius:12px; border:1px solid #30363d; text-align:right;">
-                <h4 style="color:#58a6ff; font-size:14px;">📣 لوحة المعلنين (أنشئ إعلانك)</h4>
-                <p style="font-size:11px; color:#8b949e; margin-top:4px;">سعر الإعلان ثابت: <strong>0.01 Gram</strong> للإعلان الواحد.</p>
-                
-                <select id="adType" class="form-select" onchange="calculateAdCost()">
-                    <option value="TASK">حملة اشتراك/انضمام (المستخدم يأخذ 50%)</option>
-                    <option value="VIEW">حملة مشاهدة إعلان (المستخدم يأخذ 40%)</option>
-                </select>
-
-                <input type="text" id="adLink" class="form-input" placeholder="رابط القناة / الفيديو (https://t.me/...)">
-                <input type="number" id="adCount" class="form-input" placeholder="عدد المشاهدات / الانضمامات المطلوبة (مثلاً: 100)" oninput="calculateAdCost()">
-                
-                <div style="font-size:12px; margin:10px 0; color:#2ea043; background:#0d1117; padding:8px; border-radius:6px;">
-                    <div>الميزانية الكلية: <strong id="adCostDisplay">0.00</strong> Gram/TON</div>
-                    <div style="color:#8b949e; font-size:10px; margin-top:3px;">مكافأة المستخدم للمهمة الواحدة: <span id="userRewardDisplay" style="color:#58a6ff;">0.000</span> Gram</div>
-                </div>
-                
-                <button class="btn-mine" style="background:#1f6feb; font-size:13px; padding:10px;" onclick="payAndCreateAd()">تمويل الحملة والدفع عبر المحفظة 🚀</button>
-            </div>
-        </div>
-
-        <!-- Profile Tab -->
-        <div id="tab-profile" class="tab-content">
-            <h3>الملف الشخصي والعملات 👤</h3>
-            <div class="task-list" style="margin-top:15px;">
-                <div class="task-item">
-                    <span>اسم المستخدم</span>
-                    <strong id="profName">أبو تميم</strong>
-                </div>
-                <div class="task-item">
-                    <span>المحفظة المرتبطة</span>
-                    <strong id="profWallet" style="font-size:10px; color:#58a6ff;">غير متصلة</strong>
-                </div>
-                <div class="task-item">
-                    <span>أرباح Gram الحقيقية</span>
-                    <strong id="profGram" style="color:#f2a900;">0.0000 Gram</strong>
-                </div>
-                <div class="task-item">
-                    <span>نقاط Chick Coins</span>
-                    <strong id="profChick" style="color:#2ea043;">0 Chick</strong>
-                </div>
-            </div>
-
-            <button class="btn-mine" style="margin-top:20px; background:#2ea043;" onclick="withdrawGram()">سحب الأرباح إلى المحفظة 💸</button>
-        </div>
-
+    <div class="profile-card">
+      <span class="profile-label">المحفظة المرتبطة</span>
+      <span class="profile-val num-font" style="color: var(--accent-ton);">UQCx...2D5k</span>
     </div>
 
-    <!-- Bottom Navigation (بدون الكومبو) -->
-    <div class="nav-bar">
-        <div class="nav-item" onclick="switchTab('tab-profile', this)"><span class="nav-icon">👤</span><span>Profile</span></div>
-        <div class="nav-item" onclick="switchTab('tab-friends', this)"><span class="nav-icon">👥</span><span>Friends</span></div>
-        <div class="nav-item" onclick="switchTab('tab-tasks', this)"><span class="nav-icon">📋</span><span>Tasks</span></div>
-        <div class="nav-item active" onclick="switchTab('tab-mine', this)"><span class="nav-icon">⛏️</span><span>Mine</span></div>
+    <div class="profile-card">
+      <span class="profile-label">أرباح Gram الحقيقية</span>
+      <span class="profile-val val-gram num-font" id="profGram">Gram 0.0090</span>
     </div>
 
-    <script>
-        const OWNER_WALLET_ADDRESS = "UQALZMicg23BUZMS0VgEMC713rfMMdsmyyf3AWU999Jh9unf"; 
-        const FIXED_AD_UNIT_PRICE = 0.01; // سعر ثابث للإعلان 0.01 Gram
-        const TOTAL_MINING_REWARD_8H = 100; // إجمالي عملات Chick المنتجة في 8 ساعات
-        const MINING_DURATION_SEC = 8 * 3600; 
+    <div class="profile-card">
+      <span class="profile-label">نقاط Chick Coins</span>
+      <span class="profile-val val-chick num-font" id="profChick">Chick 100</span>
+    </div>
 
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
-        if (tg) tg.expand();
+    <button class="btn-withdraw" onclick="alert('سيتم سحب الأرباح بعد الخصم إلى المحفظة المرتبطة')">
+      💸 سحب الأرباح إلى المحفظة
+    </button>
+  </div>
 
-        // Local Storage
-        let appState = JSON.parse(localStorage.getItem('chick_app_v4')) || {
-            chickCoins: 0,
-            gramCoins: 0.0000,
-            miningActive: false,
-            miningStartTime: null,
-            miningEndTime: null,
-            completedTasks: [],
-            connectedWallet: null
-        };
+  <!-- الشريط السفلي للتنقل -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('mine', this)">
+      <span class="nav-icon">⛏️</span>
+      <span>Mine</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tasks', this)">
+      <span class="nav-icon">📋</span>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('friends', this)">
+      <span class="nav-icon">👥</span>
+      <span>Friends</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('profile', this)">
+      <span class="nav-icon">👤</span>
+      <span>Profile</span>
+    </div>
+  </nav>
 
-        function saveState() {
-            localStorage.setItem('chick_app_v4', JSON.stringify(appState));
-            updateUI();
+  <script>
+    // حالة التعدين والبيانات
+    let isMining = false;
+    let miningStartTime = 0;
+    const miningDurationSeconds = 8 * 3600; // 8 ساعات
+    const targetMinedAmount = 12.0; // كمية التعدين للجلسة
+    const ratePerSecond = targetMinedAmount / miningDurationSeconds; // معدل التعدين لكل ثانية
+    
+    let baseChickBalance = 100.0;
+    let animFrameId = null;
+
+    // استرجاع حالة التعدين عند فتح التطبيق (Background Persistence)
+    window.onload = function() {
+      const savedStartTime = localStorage.getItem('chick_mining_start');
+      if (savedStartTime) {
+        const elapsed = (Date.now() - parseInt(savedStartTime)) / 1000;
+        if (elapsed < miningDurationSeconds) {
+          startMiningEngine(parseInt(savedStartTime));
+        } else {
+          // اكتمل التعدين في الخلفية
+          baseChickBalance += targetMinedAmount;
+          updateBalanceDisplays();
+          localStorage.removeItem('chick_mining_start');
         }
+      }
+    };
 
-        // TON Connect UI
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect-btn'
-        });
+    // التنقل بين التبويبات
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('tab-' + tabId).classList.add('active');
+      element.classList.add('active');
+    }
 
-        tonConnectUI.onStatusChange(wallet => {
-            if (wallet) {
-                const rawAddr = wallet.account.address;
-                const shortAddr = rawAddr.substring(0, 4) + '...' + rawAddr.substring(rawAddr.length - 4);
-                appState.connectedWallet = rawAddr;
-                document.getElementById('profWallet').innerText = shortAddr;
-            } else {
-                appState.connectedWallet = null;
-                document.getElementById('profWallet').innerText = 'غير متصلة';
-            }
-            saveState();
-        });
+    // بدء / إيقاف التعدين
+    function toggleMining() {
+      if (isMining) return;
+      const now = Date.now();
+      localStorage.setItem('chick_mining_start', now);
+      startMiningEngine(now);
+    }
 
-        // Setup User Info
-        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const u = tg.initDataUnsafe.user;
-            document.getElementById('tgName').innerText = u.first_name || 'أبو تميم';
-            document.getElementById('profName').innerText = u.first_name || 'أبو تميم';
-            document.getElementById('tgHandle').innerText = u.username ? '@' + u.username : '@Himaizzo';
-            document.getElementById('tgAvatar').innerText = (u.first_name || 'أ')[0];
-            document.getElementById('refLinkText').innerText = `https://t.me/ChickCoinGame_bot?start=${u.id}`;
+    function startMiningEngine(startTime) {
+      isMining = true;
+      miningStartTime = startTime;
+      
+      document.getElementById('chickStage').classList.add('mining-active');
+      const mineBtn = document.getElementById('mineBtn');
+      mineBtn.disabled = true;
+      mineBtn.innerText = "⚡ جاري التعدين...";
+
+      // دالة التحديث المستمر والحديث (Smooth Ticker) عبر requestAnimationFrame
+      function renderLoop() {
+        const now = Date.now();
+        const elapsedSeconds = (now - miningStartTime) / 1000;
+
+        if (elapsedSeconds < miningDurationSeconds) {
+          // حساب العداد الانسيابي بدقة أجزاء الثانية
+          const currentMined = elapsedSeconds * ratePerSecond;
+          document.getElementById('liveTicker').innerText = currentMined.toFixed(7);
+
+          // حساب العداد التنازلي للوقت
+          const remaining = miningDurationSeconds - elapsedSeconds;
+          const hrs = String(Math.floor(remaining / 3600)).padStart(2, '0');
+          const mins = String(Math.floor((remaining % 3600) / 60)).padStart(2, '0');
+          const secs = String(Math.floor(remaining % 60)).padStart(2, '0');
+          document.getElementById('timerDisplay').innerText = `${hrs}:${mins}:${secs}`;
+
+          animFrameId = requestAnimationFrame(renderLoop);
+        } else {
+          completeMiningSession();
         }
+      }
 
-        function updateUI() {
-            document.getElementById('chickCoins').innerText = Math.floor(appState.chickCoins) + ' Chick';
-            document.getElementById('gramCoins').innerText = appState.gramCoins.toFixed(4) + ' Gram';
-            document.getElementById('profGram').innerText = appState.gramCoins.toFixed(4) + ' Gram';
-            document.getElementById('profChick').innerText = Math.floor(appState.chickCoins) + ' Chick';
-            
-            appState.completedTasks.forEach(taskId => {
-                const btn = document.getElementById(taskId);
-                if (btn) {
-                    btn.innerText = 'مكتمل ✓';
-                    btn.classList.add('done');
-                    btn.disabled = true;
-                }
-            });
-        }
+      renderLoop();
+    }
 
-        // --- محرك التعدين في الخلفية والتحديث الفوري ---
-        let miningInterval = null;
+    // انتهاء جلسة التعدين
+    function completeMiningSession() {
+      isMining = false;
+      cancelAnimationFrame(animFrameId);
+      localStorage.removeItem('chick_mining_start');
+      
+      baseChickBalance += targetMinedAmount;
+      updateBalanceDisplays();
 
-        function evaluateMiningOnLoad() {
-            if (appState.miningActive && appState.miningEndTime && appState.miningStartTime) {
-                const now = Math.floor(Date.now() / 1000);
-                
-                if (now >= appState.miningEndTime) {
-                    // اكتمل التعدين أثناء غياب المستخدم
-                    appState.chickCoins += TOTAL_MINING_REWARD_8H;
-                    appState.miningActive = false;
-                    appState.miningStartTime = null;
-                    appState.miningEndTime = null;
-                    saveState();
-                    resetMineUI();
-                } else {
-                    // التعدين لا يزال مستمراً
-                    const elapsed = now - appState.miningStartTime;
-                    const earnedSoFar = (elapsed / MINING_DURATION_SEC) * TOTAL_MINING_REWARD_8H;
-                    
-                    // استئناف الواجهة وتحديث العداد
-                    runActiveMiningLoop();
-                }
-            } else {
-                resetMineUI();
-            }
-        }
+      document.getElementById('chickStage').classList.remove('mining-active');
+      document.getElementById('liveTicker').innerText = "12.0000000";
+      document.getElementById('timerDisplay').innerText = "اكتمل التعدين! 🎉";
+      
+      const mineBtn = document.getElementById('mineBtn');
+      mineBtn.disabled = false;
+      mineBtn.innerText = "جمع الأرباح وبدء دورة جديدة 🚀";
+    }
 
-        function startMiningProcess() {
-            if (appState.miningActive) return;
-
-            const now = Math.floor(Date.now() / 1000);
-            appState.miningActive = true;
-            appState.miningStartTime = now;
-            appState.miningEndTime = now + MINING_DURATION_SEC;
-            saveState();
-
-            runActiveMiningLoop();
-        }
-
-        function runActiveMiningLoop() {
-            const btn = document.getElementById('mineBtn');
-            btn.innerText = '⚡ جاري التعدين...';
-            btn.classList.add('mining');
-
-            clearInterval(miningInterval);
-
-            miningInterval = setInterval(() => {
-                const now = Math.floor(Date.now() / 1000);
-                const remaining = appState.miningEndTime - now;
-
-                if (remaining <= 0) {
-                    clearInterval(miningInterval);
-                    appState.chickCoins += TOTAL_MINING_REWARD_8H;
-                    appState.miningActive = false;
-                    appState.miningStartTime = null;
-                    appState.miningEndTime = null;
-                    saveState();
-                    resetMineUI();
-                    return;
-                }
-
-                // حساب الأرباح الحالية للعد التفاعلي السريع
-                const elapsed = now - appState.miningStartTime;
-                const currentMined = (elapsed / MINING_DURATION_SEC) * TOTAL_MINING_REWARD_8H;
-                
-                // عرض العداد بدقة تفاعلية تبدأ التغير من أول الأرقام العشرية
-                document.getElementById('miningCounter').innerText = currentMined.toFixed(8);
-
-                // الوقت المتبقي
-                const h = String(Math.floor(remaining / 3600)).padStart(2, '0');
-                const m = String(Math.floor((remaining % 3600) / 60)).padStart(2, '0');
-                const s = String(remaining % 60).padStart(2, '0');
-                document.getElementById('timerDisplay').innerText = `${h}:${m}:${s}`;
-
-            }, 1000);
-        }
-
-        function resetMineUI() {
-            const btn = document.getElementById('mineBtn');
-            btn.innerText = 'بدء التعدين المجاني';
-            btn.classList.remove('mining');
-            document.getElementById('timerDisplay').innerText = "08:00:00";
-            document.getElementById('miningCounter').innerText = "0.00000000";
-        }
-
-        // --- تنفيذ المهام بالإيقاع المالي المحدد ---
-        function executeRealTask(taskId, link, unitPrice, type) {
-            if (appState.completedTasks.includes(taskId)) return;
-
-            if (tg) { tg.openLink(link); } else { window.open(link, '_blank'); }
-
-            const btn = document.getElementById(taskId);
-            btn.innerText = 'جاري التحقق...';
-            btn.disabled = true;
-
-            setTimeout(() => {
-                let userShareRate = (type === 'VIEW') ? 0.40 : 0.50;
-                let userEarnedGram = unitPrice * userShareRate;
-
-                appState.gramCoins += userEarnedGram;
-                appState.completedTasks.push(taskId);
-                saveState();
-
-                btn.innerText = `مكتمل (+${userEarnedGram.toFixed(3)} Gram)`;
-                btn.classList.add('done');
-            }, 3000);
-        }
-
-        // --- لوحة المعلنين بسعر ثابت ---
-        function calculateAdCost() {
-            const type = document.getElementById('adType').value;
-            const count = parseInt(document.getElementById('adCount').value) || 0;
-
-            const totalCost = (FIXED_AD_UNIT_PRICE * count).toFixed(2);
-            document.getElementById('adCostDisplay').innerText = totalCost;
-
-            const userRate = (type === 'VIEW') ? 0.40 : 0.50;
-            const userReward = (FIXED_AD_UNIT_PRICE * userRate).toFixed(3);
-            document.getElementById('userRewardDisplay').innerText = userReward;
-        }
-
-        async function payAndCreateAd() {
-            const link = document.getElementById('adLink').value;
-            const count = parseInt(document.getElementById('adCount').value);
-            const type = document.getElementById('adType').value;
-            const totalCostGram = parseFloat(document.getElementById('adCostDisplay').innerText);
-
-            if (!link || !count || count <= 0) {
-                alert('يرجى التأكد من إدخال رابط صحبح وعدد الإعلانات.');
-                return;
-            }
-
-            if (!tonConnectUI.connected) {
-                alert('يرجى ربط محفظة TON أولاً لإتمام عملية التمويل والدفع!');
-                return;
-            }
-
-            try {
-                const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 600,
-                    messages: [
-                        {
-                            address: OWNER_WALLET_ADDRESS,
-                            amount: (totalCostGram * 1000000000).toString()
-                        }
-                    ]
-                };
-
-                await tonConnectUI.sendTransaction(transaction);
-                alert('تم التمويل والدفع بنجاح! الإعلان يعرض الآن للجمهور 🎉');
-
-                const taskContainer = document.getElementById('dynamicTasksList');
-                const newTaskId = 'ad-task-' + Date.now();
-                const userShare = (type === 'VIEW' ? FIXED_AD_UNIT_PRICE * 0.40 : FIXED_AD_UNIT_PRICE * 0.50).toFixed(3);
-                const btnLabel = type === 'VIEW' ? `مشاهدة (+${userShare} Gram)` : `انضمام (+${userShare} Gram)`;
-
-                const taskHtml = `
-                    <div class="task-item">
-                        <span>📢 ${link.replace('https://t.me/', '')}</span>
-                        <button class="task-btn" id="${newTaskId}" onclick="executeRealTask('${newTaskId}', '${link}', ${FIXED_AD_UNIT_PRICE}, '${type}')">${btnLabel}</button>
-                    </div>
-                `;
-                taskContainer.insertAdjacentHTML('beforeend', taskHtml);
-
-                document.getElementById('adLink').value = '';
-                document.getElementById('adCount').value = '';
-                calculateAdCost();
-
-            } catch (e) {
-                alert('حدث خطأ أو تم إلغاء عملية الدفع.');
-            }
-        }
-
-        // --- السحب مع الخصم من رصيد المستخدم ---
-        function withdrawGram() {
-            const minWithdraw = 1.0;
-            const estimatedGasFee = 0.05; // رسوم الشبكة التقديرية
-
-            if (appState.gramCoins < minWithdraw) {
-                alert(`الحد الأدنى للسحب هو ${minWithdraw} Gram.\nتنويه: سيتم خصم رسوم شبكة TON (حوالي ${estimatedGasFee} Gram) تلقائياً من المبلغ المسحوب الخاص بك عند المعالجة.`);
-            } else {
-                const netAmount = (appState.gramCoins - estimatedGasFee).toFixed(4);
-                alert(`طلب السحب قيد المعالجة!\nالمبلغ الإجمالي: ${appState.gramCoins.toFixed(4)} Gram\nرسوم الشبكة الخصم: ${estimatedGasFee} Gram\nالصاقي للمحفظة: ${netAmount} Gram`);
-            }
-        }
-
-        // Navigation
-        function switchTab(tabId, element) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            element.classList.add('active');
-        }
-
-        function copyRefLink() {
-            const link = document.getElementById('refLinkText').innerText;
-            navigator.clipboard.writeText(link).then(() => alert('تم نسخ رابط الدعوة!'));
-        }
-
-        // Initialization
-        updateUI();
-        evaluateMiningOnLoad();
-        calculateAdCost();
-    </script>
+    function updateBalanceDisplays() {
+      document.getElementById('chickBalanceDisplay').innerText = `Chick ${baseChickBalance.toFixed(2)}`;
+      document.getElementById('profChick').innerText = `Chick ${baseChickBalance.toFixed(0)}`;
+    }
+  </script>
 </body>
 </html>
